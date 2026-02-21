@@ -10,8 +10,9 @@ import torch
 import triton
 import triton.language as tl
 from einops import rearrange
-from fla.utils import contiguous
 from torch.amp import custom_bwd, custom_fwd
+
+from flag_gems.fused.ChunkGatedDeltaRule.utils import input_guard as contiguous
 
 
 # Inspired by "THE WY REPRESENTATION FOR PRODUCTS OF HOUSEHOLDER MATRICES"

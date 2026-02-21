@@ -11,8 +11,9 @@ import torch.nn.functional as F
 import triton
 import triton.language as tl
 from einops import rearrange
-from fla.utils import contiguous
 from torch.amp import custom_bwd, custom_fwd
+
+from flag_gems.fused.ChunkGatedDeltaRule.utils import input_guard as contiguous
 
 # Use unified WY representation implementation (identical to GatedDeltaNet)
 from .wy_fast import bwd_prepare_wy_repr, fwd_prepare_wy_repr, fwd_recompute_w_u

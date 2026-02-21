@@ -1,0 +1,100 @@
+{
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[gateddnet-dtype0]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.float16"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[gateddnet-dtype1]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.float32"
+        },
+        "result": "skipped",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": "Skipped: Reference implementation failed: out of resource: shared memory, Required: 131584, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[gateddnet-dtype2]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.bfloat16"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[fla-dtype0]": {
+        "params": {
+            "backend": "fla",
+            "dtype": "torch.float16"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[fla-dtype1]": {
+        "params": {
+            "backend": "fla",
+            "dtype": "torch.float32"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_small[fla-dtype2]": {
+        "params": {
+            "backend": "fla",
+            "dtype": "torch.bfloat16"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_medium[gateddnet-dtype0]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.float16"
+        },
+        "result": "passed",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": null
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_medium[gateddnet-dtype1]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.float32"
+        },
+        "result": "skipped",
+        "opname": [
+            "chunk_gated_delta_rule"
+        ],
+        "skipped_reason": "Skipped: Reference implementation failed: out of resource: shared memory, Required: 110848, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+    },
+    "tests/test_FLA/test_chunk_gated_delta_rule.py::TestChunkGatedDeltaRuleComparison::test_matches_reference_medium[gateddnet-dtype2]": {
+        "params": {
+            "backend": "gateddnet",
+            "dtype": "torch.bfloat16"
+        },
+        "result": null,
+        "opname": [
+            "chunk_gated_delta_rule"
+        ]
+    }
+}

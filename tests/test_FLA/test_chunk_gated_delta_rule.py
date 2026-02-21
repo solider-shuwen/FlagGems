@@ -60,11 +60,11 @@ BACKENDS_TO_TEST = []
 if GATEDDELTANET_AVAILABLE:
     # When GatedDeltaNet is available, only test GatedDeltaNet backend
     BACKENDS_TO_TEST.append("gateddnet")
-    print("Testing GatedDeltaNet backend only (GatedDeltaNet is available).")
+    print("GatedDeltaNet is available")
 if FLA_AVAILABLE:
     # When only FLA is available, only test FLA backend
     BACKENDS_TO_TEST.append("fla")
-    print("Testing FLA backend only (FLA is available, GagedDeltaNet is not).")
+    print("FLA is available")
 
 # ============================================================================
 # Precision Standards
