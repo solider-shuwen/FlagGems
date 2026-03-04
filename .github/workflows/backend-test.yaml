@@ -1,7 +1,7 @@
 ---
 name: Backend Test
 
-'on':
+on:
   workflow_call:
     inputs:
       vendor:
@@ -21,6 +21,11 @@ name: Backend Test
         description: 'Path to test script under tools/'
         required: true
         type: string
+      changed_files:
+        description: 'List of changed files in a PR'
+        required: false
+        type: string
+        default: ''
 
 # NOTE: The following environment variables are for CI runners to
 # mitigate the network connection problems. However, this may not work
@@ -31,7 +36,7 @@ env:
   https_proxy: ${{ secrets.HTTPS_PROXY }}
 
 jobs:
-  op-test:
+  test:
     runs-on: ${{ inputs.runner_label }}
     concurrency:
       group: >-
@@ -39,16 +44,15 @@ jobs:
         ${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
+      - uses: actions/checkout@v6
       - name: Check GPU availability
         if: ${{ inputs.gpu_check_script != '' }}
         shell: bash
         run: |
           bash ${{ inputs.gpu_check_script }}
-
       - name: Run backend tests
+        env:
+          CHANGED_FILES: ${{ inputs.changed_files }}
         shell: bash
         run: |
           bash ${{ inputs.test_script }} ${{ inputs.vendor }}
