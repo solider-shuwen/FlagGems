@@ -4,12 +4,13 @@ Test suite for gcd operator.
 This test module validates the correctness, precision, and performance
 of the gcd operator implementation following FlagGems testing conventions.
 
-测试覆盖说明：
-- 输入规模：1×1, 8×8, 64×64, 256×256, 1024×1024, 4096×4096
-- 输入维数：1D, 2D, 3D, 4D
-- 数据类型：整数类型（int8, int16, int32, int64）
-- 参数模式：默认值、边界值、特殊值、数学性质
-- 功能完整性：基本计算、零值处理、负值处理、数学性质验证
+Test coverage description:
+- Input sizes: 1×1, 8×8, 64×64, 256×256, 1024×1024, 4096×4096
+- Input dimensions: 1D, 2D, 3D, 4D
+- Data types: integer types (int8, int16, int32, int64)
+- Parameter modes: default values, boundary values, special values, mathematical properties
+- Functional completeness: basic computation, zero value handling, negative value handling,
+mathematical property verification
 """
 
 import pytest
@@ -18,20 +19,20 @@ import torch
 from flag_gems.ops import gcd
 
 # ============================================================================
-# 测试数据定义（按照比赛要求）
+# Test data definitions (following competition requirements)
 # ============================================================================
 
-# 输入规模覆盖（比赛要求：小尺寸、常规尺寸、大尺寸）
+# Input size coverage (competition requirement: small, medium, large sizes)
 POINTWISE_SHAPES = [
-    8,  # 小尺寸
-    64,  # 小尺寸
-    64 * 64,  # 常规尺寸
-    256 * 256,  # 常规尺寸
-    1024 * 1024,  # 大尺寸
-    4096 * 4096,  # 大尺寸
+    8,  # small size
+    64,  # small size
+    64 * 64,  # medium size
+    256 * 256,  # medium size
+    1024 * 1024,  # large size
+    4096 * 4096,  # large size
 ]
 
-# 整数类型覆盖（GCD 只支持整数）
+# Integer type coverage (GCD only supports integers)
 INT_DTYPES = [
     torch.int8,
     torch.int16,
@@ -39,7 +40,7 @@ INT_DTYPES = [
     torch.int64,
 ]
 
-# 精度标准（GCD 是精确计算，不允许误差）
+# Precision standards (GCD is exact calculation, no error allowed)
 ATOL_DICT = {
     torch.int8: 0,
     torch.int16: 0,
@@ -49,28 +50,28 @@ ATOL_DICT = {
 
 
 # ============================================================================
-# 辅助函数
+# Helper functions
 # ============================================================================
 
 
 def assert_equal(actual, expected, dtype=torch.int32):
     """
-    使用 torch.equal 验证精确相等（GCD 必须完全匹配）
+    Verify exact equality using torch.equal (GCD must match exactly)
 
     Args:
-        actual: FlagGems 实现结果
-        expected: PyTorch 参考结果
-        dtype: 数据类型
+        actual: FlagGems implementation result
+        expected: PyTorch reference result
+        dtype: Data type
     """
-    # GCD 必须精确匹配，不允许任何误差
+    # GCD must match exactly, no error allowed
     assert torch.equal(
         actual, expected
     ), f"GCD results don't match at {((actual != expected).sum().item())} positions"
 
 
 def create_int_tensor(shape, dtype, device="cuda", low=1, high=1000):
-    """创建随机整数测试张量"""
-    # 根据数据类型调整范围，避免溢出
+    """Create random integer test tensor"""
+    # Adjust range based on data type to avoid overflow
     dtype_limits = {
         torch.int8: 127,
         torch.int16: 32767,
@@ -84,16 +85,16 @@ def create_int_tensor(shape, dtype, device="cuda", low=1, high=1000):
 
 
 # ============================================================================
-# 1. 输入规模覆盖测试（比赛要求：小、常规、大三类）
+# 1. Input size coverage tests (competition requirement: small, medium, large three categories)
 # ============================================================================
 
 
 class TestGcdInputSize:
-    """测试输入规模覆盖"""
+    """Test input size coverage"""
 
     @pytest.mark.gcd
     def test_size_very_small(self):
-        """测试：1×1（极小尺寸）"""
+        """Test: 1×1 (extremely small size)"""
         x = torch.tensor([[12]], device="cuda")
         y = torch.tensor([[8]], device="cuda")
         z_gems = gcd(x, y)
@@ -102,7 +103,7 @@ class TestGcdInputSize:
 
     @pytest.mark.gcd
     def test_size_small(self):
-        """测试：8×8（小尺寸）"""
+        """Test: 8×8 (small size)"""
         x = create_int_tensor((8, 8), torch.int32)
         y = create_int_tensor((8, 8), torch.int32)
         z_gems = gcd(x, y)
@@ -111,7 +112,7 @@ class TestGcdInputSize:
 
     @pytest.mark.gcd
     def test_size_medium_64(self):
-        """测试：64×64（常规尺寸）"""
+        """Test: 64×64 (medium size)"""
         x = create_int_tensor((64, 64), torch.int32)
         y = create_int_tensor((64, 64), torch.int32)
         z_gems = gcd(x, y)
@@ -120,7 +121,7 @@ class TestGcdInputSize:
 
     @pytest.mark.gcd
     def test_size_medium_256(self):
-        """测试：256×256（常规尺寸）"""
+        """Test: 256×256 (medium size)"""
         x = create_int_tensor((256, 256), torch.int32)
         y = create_int_tensor((256, 256), torch.int32)
         z_gems = gcd(x, y)
@@ -129,7 +130,7 @@ class TestGcdInputSize:
 
     @pytest.mark.gcd
     def test_size_large_1k(self):
-        """测试：1024×1024（大尺寸）"""
+        """Test: 1024×1024 (large size)"""
         x = create_int_tensor((1024, 1024), torch.int32)
         y = create_int_tensor((1024, 1024), torch.int32)
         z_gems = gcd(x, y)
@@ -138,7 +139,7 @@ class TestGcdInputSize:
 
     @pytest.mark.gcd
     def test_size_large_4k(self):
-        """测试：4096×4096（大尺寸）"""
+        """Test: 4096×4096 (large size)"""
         x = create_int_tensor((4096, 4096), torch.int32)
         y = create_int_tensor((4096, 4096), torch.int32)
         z_gems = gcd(x, y)
@@ -147,16 +148,16 @@ class TestGcdInputSize:
 
 
 # ============================================================================
-# 2. 输入维数覆盖测试（比赛要求：覆盖全部合法维数）
+# 2. Input dimension coverage tests (competition requirement: cover all valid dimensions)
 # ============================================================================
 
 
 class TestGcdInputDimensions:
-    """测试输入维数覆盖：1D, 2D, 3D, 4D"""
+    """Test input dimension coverage: 1D, 2D, 3D, 4D"""
 
     @pytest.mark.gcd
     def test_dim_1d_small(self):
-        """测试：1D 张量（小尺寸）"""
+        """Test: 1D tensor (small size)"""
         x = create_int_tensor((10,), torch.int32)
         y = create_int_tensor((10,), torch.int32)
         z_gems = gcd(x, y)
@@ -165,7 +166,7 @@ class TestGcdInputDimensions:
 
     @pytest.mark.gcd
     def test_dim_1d_large(self):
-        """测试：1D 张量（大尺寸）"""
+        """Test: 1D tensor (large size)"""
         x = create_int_tensor((10000,), torch.int32)
         y = create_int_tensor((10000,), torch.int32)
         z_gems = gcd(x, y)
@@ -174,7 +175,7 @@ class TestGcdInputDimensions:
 
     @pytest.mark.gcd
     def test_dim_2d(self):
-        """测试：2D 张量"""
+        """Test: 2D tensor"""
         x = create_int_tensor((100, 100), torch.int32)
         y = create_int_tensor((100, 100), torch.int32)
         z_gems = gcd(x, y)
@@ -183,7 +184,7 @@ class TestGcdInputDimensions:
 
     @pytest.mark.gcd
     def test_dim_3d(self):
-        """测试：3D 张量"""
+        """Test: 3D tensor"""
         x = create_int_tensor((64, 64, 64), torch.int32)
         y = create_int_tensor((64, 64, 64), torch.int32)
         z_gems = gcd(x, y)
@@ -192,7 +193,7 @@ class TestGcdInputDimensions:
 
     @pytest.mark.gcd
     def test_dim_4d_batch(self):
-        """测试：4D 批量张量（batch × channel × height × width）"""
+        """Test: 4D batch tensor (batch × channel × height × width)"""
         x = create_int_tensor((16, 3, 128, 128), torch.int32)
         y = create_int_tensor((16, 3, 128, 128), torch.int32)
         z_gems = gcd(x, y)
@@ -201,17 +202,17 @@ class TestGcdInputDimensions:
 
 
 # ============================================================================
-# 3. 数据类型覆盖测试（比赛要求：支持所有整数类型）
+# 3. Data type coverage tests (competition requirement: support all integer types)
 # ============================================================================
 
 
 class TestGcdDataTypes:
-    """测试数据类型覆盖：int8, int16, int32, int64"""
+    """Test data type coverage: int8, int16, int32, int64"""
 
     @pytest.mark.gcd
     @pytest.mark.parametrize("dtype", INT_DTYPES)
     def test_all_int_dtypes(self, dtype):
-        """测试：所有整数数据类型"""
+        """Test: all integer data types"""
         x = create_int_tensor((256, 256), dtype)
         y = create_int_tensor((256, 256), dtype)
         z_gems = gcd(x, y)
@@ -220,16 +221,17 @@ class TestGcdDataTypes:
 
 
 # ============================================================================
-# 4. 参数模式覆盖测试（比赛要求：默认值、边界值、特殊值、数学性质）
+# 4. Parameter pattern coverage tests (competition requirement: default values,
+# boundary values, special values, mathematical properties)
 # ============================================================================
 
 
 class TestGcdParameterPatterns:
-    """测试参数模式：默认值、边界值、特殊值、数学性质"""
+    """Test parameter patterns: default values, boundary values, special values, mathematical properties"""
 
     @pytest.mark.gcd
     def test_default_usage(self):
-        """测试：默认参数使用"""
+        """Test: default parameter usage"""
         x = create_int_tensor((100, 100), torch.int32)
         y = create_int_tensor((100, 100), torch.int32)
         z_gems = gcd(x, y)
@@ -238,7 +240,7 @@ class TestGcdParameterPatterns:
 
     @pytest.mark.gcd
     def test_edge_case_zero_values(self):
-        """测试：边界值 - 零值处理"""
+        """Test: boundary values - zero value handling"""
         # gcd(0, a) = a, gcd(a, 0) = a, gcd(0, 0) = 0
         x = torch.tensor([0, 5, 10, 0], device="cuda")
         y = torch.tensor([15, 0, 0, 0], device="cuda")
@@ -250,7 +252,7 @@ class TestGcdParameterPatterns:
 
     @pytest.mark.gcd
     def test_special_negative_values(self):
-        """测试：特殊值 - 负数值（gcd(a,b) = gcd(|a|,|b|)）"""
+        """Test: special values - negative values (gcd(a,b) = gcd(|a|,|b|))"""
         x = torch.tensor([-12, -18, 24], device="cuda")
         y = torch.tensor([8, -12, -36], device="cuda")
         z_gems = gcd(x, y)
@@ -261,7 +263,7 @@ class TestGcdParameterPatterns:
 
     @pytest.mark.gcd
     def test_special_prime_numbers(self):
-        """测试：特殊值 - 质数（gcd = 1）"""
+        """Test: special values - prime numbers (gcd = 1)"""
         x = torch.tensor([17, 19, 23], device="cuda")
         y = torch.tensor([13, 7, 11], device="cuda")
         z_gems = gcd(x, y)
@@ -272,7 +274,7 @@ class TestGcdParameterPatterns:
 
     @pytest.mark.gcd
     def test_special_same_numbers(self):
-        """测试：特殊值 - 相同数（gcd(a, a) = a）"""
+        """Test: special values - same numbers (gcd(a, a) = a)"""
         x = torch.tensor([42, 100, 255], device="cuda")
         y = torch.tensor([42, 100, 255], device="cuda")
         z_gems = gcd(x, y)
@@ -283,7 +285,7 @@ class TestGcdParameterPatterns:
 
     @pytest.mark.gcd
     def test_special_large_numbers(self):
-        """测试：特殊值 - 大数值"""
+        """Test: special values - large numbers"""
         x = torch.tensor([123456, 987654], device="cuda")
         y = torch.tensor([789012, 456789], device="cuda")
         z_gems = gcd(x, y)
@@ -292,16 +294,17 @@ class TestGcdParameterPatterns:
 
 
 # ============================================================================
-# 5. 功能完整性测试（比赛要求：所有功能分支）
+# 5. Functional completeness tests (competition requirement: all functional branches)
 # ============================================================================
 
 
 class TestGcdFunctionalCompleteness:
-    """测试功能完整性：基本计算、零值处理、负值处理、数学性质"""
+    """Test functional completeness: basic computation, zero value handling,
+    negative value handling, mathematical properties"""
 
     @pytest.mark.gcd
     def test_basic_computation(self):
-        """测试：基本元素-wise 计算"""
+        """Test: basic element-wise computation"""
         x = torch.tensor([12, 18, 24, 35], device="cuda")
         y = torch.tensor([8, 12, 36, 49], device="cuda")
         z_gems = gcd(x, y)
@@ -312,7 +315,7 @@ class TestGcdFunctionalCompleteness:
 
     @pytest.mark.gcd
     def test_commutative_property(self):
-        """测试：交换律 gcd(a, b) = gcd(b, a)"""
+        """Test: commutative property gcd(a, b) = gcd(b, a)"""
         x = create_int_tensor((100, 100), torch.int32)
         y = create_int_tensor((100, 100), torch.int32)
         z_ab = gcd(x, y)
@@ -321,7 +324,7 @@ class TestGcdFunctionalCompleteness:
 
     @pytest.mark.gcd
     def test_batch_processing(self):
-        """测试：批量处理（多张量）"""
+        """Test: batch processing (multiple tensors)"""
         tensors_x = [
             create_int_tensor((64, 64), torch.int32),
             create_int_tensor((128, 128), torch.int32),
@@ -339,8 +342,8 @@ class TestGcdFunctionalCompleteness:
 
     @pytest.mark.gcd
     def test_consistency_with_pytorch(self):
-        """测试：与 PyTorch 实现的一致性"""
-        # 使用随机张量测试多次
+        """Test: consistency with PyTorch implementation"""
+        # Test multiple times using random tensors
         for _ in range(10):
             x = create_int_tensor((100, 100), torch.int32)
             y = create_int_tensor((100, 100), torch.int32)
@@ -350,18 +353,18 @@ class TestGcdFunctionalCompleteness:
 
 
 # ============================================================================
-# 6. 综合覆盖测试（参数化组合）
+# 6. Comprehensive coverage tests (parameterized combinations)
 # ============================================================================
 
 
 class TestGcdComprehensive:
-    """综合测试：多维度组合覆盖"""
+    """Comprehensive tests: multi-dimensional combination coverage"""
 
     @pytest.mark.gcd
     @pytest.mark.parametrize("shape", [8, 64 * 64, 256 * 256, 1024 * 1024])
     @pytest.mark.parametrize("dtype", [torch.int32, torch.int64])
     def test_shape_dtype_combination(self, shape, dtype):
-        """测试：形状和数据类型的组合"""
+        """Test: combinations of shapes and data types"""
         x = create_int_tensor((shape,), dtype)
         y = create_int_tensor((shape,), dtype)
         z_gems = gcd(x, y)
@@ -379,64 +382,9 @@ class TestGcdComprehensive:
         ],
     )
     def test_typical_use_cases(self, shape, dtype):
-        """测试：典型使用场景"""
+        """Test: typical use cases"""
         x = create_int_tensor(shape, dtype)
         y = create_int_tensor(shape, dtype)
         z_gems = gcd(x, y)
         z_torch = torch.gcd(x, y)
         assert_equal(z_gems, z_torch, dtype=dtype)
-
-
-# ============================================================================
-# 测试覆盖清单（用于 PR 描述）
-# ============================================================================
-
-"""
-## 测试覆盖清单
-
-### 1. 输入规模覆盖 ✓
-- [x] 极小尺寸：1×1
-- [x] 小尺寸：8×8, 64
-- [x] 常规尺寸：64×64 (4,096), 256×256 (65,536)
-- [x] 大尺寸：1024×1024 (1,048,576), 4096×4096 (16,777,216)
-
-### 2. 输入维数覆盖 ✓
-- [x] 1D 张量：(10,), (10000,)
-- [x] 2D 张量：(100, 100)
-- [x] 3D 张量：(64, 64, 64)
-- [x] 4D 张量：(16, 3, 128, 128) - 批量矩阵
-
-### 3. 数据类型覆盖 ✓
-- [x] torch.int8 (atol=0)
-- [x] torch.int16 (atol=0)
-- [x] torch.int32 (atol=0)
-- [x] torch.int64 (atol=0)
-
-### 4. 参数模式覆盖 ✓
-- [x] 默认参数
-- [x] 边界值：零值处理 gcd(0, a) = a
-- [x] 特殊值：负数值 gcd(a, b) = gcd(|a|, |b|)
-- [x] 特殊值：质数（gcd = 1）
-- [x] 特殊值：相同数 gcd(a, a) = a
-- [x] 特殊值：大数值
-- [x] 数学性质：交换律 gcd(a, b) = gcd(b, a)
-
-### 5. 功能完整性覆盖 ✓
-- [x] 基本 element-wise 计算
-- [x] 零值处理
-- [x] 负值处理（绝对值）
-- [x] 批量处理
-- [x] 与 PyTorch 一致性验证
-- [x] 交换律验证
-
-### 6. 测试精度标准 ✓
-- [x] 精确匹配（GCD 是整数运算，不允许误差）
-- [x] 使用 torch.equal 验证
-- [x] atol = 0 (所有整数类型)
-
-### 7. 数学性质测试 ✓
-- [x] 零值性质：gcd(0, a) = a
-- [x] 负值性质：gcd(a, b) = gcd(|a|, |b|)
-- [x] 交换律：gcd(a, b) = gcd(b, a)
-- [x] 自反性：gcd(a, a) = a
-"""

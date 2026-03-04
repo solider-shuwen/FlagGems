@@ -4,12 +4,12 @@ Test suite for tril operator.
 This test module validates the correctness and functionality
 of the tril operator implementation following FlagGems testing conventions.
 
-测试覆盖说明：
-- 输入规模：小尺寸、常规尺寸、大尺寸
-- 输入维数：2D, 3D, 4D (批量矩阵)
-- 数据类型：float16, float32, float64, bfloat16
-- 参数模式：diagonal 参数（负值、零、正值）
-- 功能完整性：方阵、矩形矩阵、批量处理、边界情况
+Test coverage description:
+- Input sizes: small, regular, large
+- Input dimensions: 2D, 3D, 4D (batch matrices)
+- Data types: float16, float32, float64, bfloat16
+- Parameter patterns: diagonal parameter (negative, zero, positive values)
+- Functional completeness: square matrices, rectangular matrices, batch processing, edge cases
 """
 
 import pytest
@@ -18,28 +18,28 @@ import torch
 from flag_gems.ops import tril
 
 # ============================================================================
-# 测试数据定义（按照比赛要求）
+# Test data definitions (following competition requirements)
 # ============================================================================
 
-# 输入规模覆盖（比赛要求：小尺寸、常规尺寸、大尺寸）
+# Input size coverage (competition requirement: small, regular, large sizes)
 MATRIX_SHAPES = [
-    (8, 8),  # 小尺寸
-    (16, 16),  # 小尺寸
-    (64, 64),  # 常规尺寸
-    (256, 256),  # 常规尺寸
-    (1024, 1024),  # 大尺寸
-    (4096, 4096),  # 大尺寸
+    (8, 8),  # small size
+    (16, 16),  # small size
+    (64, 64),  # regular size
+    (256, 256),  # regular size
+    (1024, 1024),  # large size
+    (4096, 4096),  # large size
 ]
 
-# 矩形形状（行数 ≠ 列数）
+# Rectangular shapes (rows ≠ columns)
 RECTANGULAR_SHAPES = [
-    (32, 64),  # 宽矩阵
-    (64, 32),  # 高矩阵
-    (16, 128),  # 更宽
-    (128, 16),  # 更高
+    (32, 64),  # wide matrix
+    (64, 32),  # tall matrix
+    (16, 128),  # wider
+    (128, 16),  # taller
 ]
 
-# 数据类型覆盖（比赛要求：至少支持 float32/float16）
+# Data type coverage (competition requirement: at least support float32/float16)
 FLOAT_DTYPES = [
     torch.float16,
     torch.float32,
@@ -47,7 +47,7 @@ FLOAT_DTYPES = [
     torch.bfloat16,
 ]
 
-# 精度标准（比赛要求的标准）
+# Precision standards (competition requirement standards)
 ATOL_DICT = {
     torch.float16: 1e-3,
     torch.float32: 1.3e-6,
@@ -57,18 +57,18 @@ ATOL_DICT = {
 
 
 # ============================================================================
-# 辅助函数
+# Helper functions
 # ============================================================================
 
 
 def assert_equal(actual, expected, msg=""):
     """
-    使用 torch.equal 验证精确相等（tril 必须完全匹配）
+    Verify exact equality using torch.equal (tril must match exactly)
 
     Args:
-        actual: FlagGems 实现结果
-        expected: PyTorch 参考结果
-        msg: 错误消息
+        actual: FlagGems implementation result
+        expected: PyTorch reference result
+        msg: error message
     """
     assert torch.equal(
         actual, expected
@@ -76,22 +76,22 @@ def assert_equal(actual, expected, msg=""):
 
 
 def create_matrix(shape, dtype, device="cuda"):
-    """创建随机矩阵"""
+    """Create random matrix"""
     x = torch.randn(shape, dtype=dtype, device=device)
     return x
 
 
 # ============================================================================
-# 1. 输入规模覆盖测试（比赛要求：小、常规、大三类）
+# 1. Input size coverage tests (competition requirement: small, regular, large categories)
 # ============================================================================
 
 
 class TestTrilInputSize:
-    """测试输入规模覆盖"""
+    """Test input size coverage"""
 
     @pytest.mark.tril
     def test_size_very_small(self):
-        """测试：2×2（极小尺寸）"""
+        """Test: 2×2 (extremely small size)"""
         x = torch.tensor([[1.0, 2.0], [3.0, 4.0]], device="cuda")
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -100,7 +100,7 @@ class TestTrilInputSize:
     @pytest.mark.tril
     @pytest.mark.parametrize("shape", MATRIX_SHAPES)
     def test_various_sizes(self, shape):
-        """测试：各种矩阵尺寸"""
+        """Test: various matrix sizes"""
         x = create_matrix(shape, torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -108,16 +108,16 @@ class TestTrilInputSize:
 
 
 # ============================================================================
-# 2. 输入维数覆盖测试（比赛要求：覆盖全部合法维数）
+# 2. Input dimension coverage tests (competition requirement: cover all valid dimensions)
 # ============================================================================
 
 
 class TestTrilInputDimensions:
-    """测试输入维数覆盖：2D, 3D, 4D"""
+    """Test input dimension coverage: 2D, 3D, 4D"""
 
     @pytest.mark.tril
     def test_dim_2d_square(self):
-        """测试：2D 方阵"""
+        """Test: 2D square matrix"""
         x = create_matrix((100, 100), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -125,7 +125,7 @@ class TestTrilInputDimensions:
 
     @pytest.mark.tril
     def test_dim_2d_rectangular(self):
-        """测试：2D 矩形矩阵"""
+        """Test: 2D rectangular matrix"""
         x = create_matrix((50, 100), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -133,7 +133,7 @@ class TestTrilInputDimensions:
 
     @pytest.mark.tril
     def test_dim_3d_batch(self):
-        """测试：3D 批量矩阵 (batch, M, N)"""
+        """Test: 3D batch matrix (batch, M, N)"""
         x = create_matrix((10, 64, 64), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -141,7 +141,7 @@ class TestTrilInputDimensions:
 
     @pytest.mark.tril
     def test_dim_4d_batch(self):
-        """测试：4D 批量矩阵 (batch, channel, M, N)"""
+        """Test: 4D batch matrix (batch, channel, M, N)"""
         x = create_matrix((4, 3, 32, 32), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -149,17 +149,17 @@ class TestTrilInputDimensions:
 
 
 # ============================================================================
-# 3. 数据类型覆盖测试（比赛要求：至少支持 float32/float16）
+# 3. Data type coverage tests (competition requirement: at least support float32/float16)
 # ============================================================================
 
 
 class TestTrilDataTypes:
-    """测试数据类型覆盖：float16, float32, float64, bfloat16"""
+    """Test data type coverage: float16, float32, float64, bfloat16"""
 
     @pytest.mark.tril
     @pytest.mark.parametrize("dtype", FLOAT_DTYPES)
     def test_all_float_dtypes(self, dtype):
-        """测试：所有浮点数据类型"""
+        """Test: all floating point data types"""
         x = create_matrix((64, 64), dtype)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -167,16 +167,16 @@ class TestTrilDataTypes:
 
 
 # ============================================================================
-# 4. 参数模式覆盖测试（diagonal 参数）
+# 4. Parameter pattern coverage tests (diagonal parameter)
 # ============================================================================
 
 
 class TestTrilParameterPatterns:
-    """测试 diagonal 参数：默认值、边界值、特殊值"""
+    """Test diagonal parameter: default value, boundary value, special value"""
 
     @pytest.mark.tril
     def test_default_diagonal(self):
-        """测试：默认 diagonal=0（主对角线）"""
+        """Test: default diagonal=0 (main diagonal)"""
         x = torch.tensor(
             [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
             device="cuda",
@@ -192,7 +192,7 @@ class TestTrilParameterPatterns:
 
     @pytest.mark.tril
     def test_diagonal_positive(self):
-        """测试：diagonal > 0（主对角线以上）"""
+        """Test: diagonal > 0 (above main diagonal)"""
         x = torch.tensor(
             [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
             device="cuda",
@@ -219,7 +219,7 @@ class TestTrilParameterPatterns:
 
     @pytest.mark.tril
     def test_diagonal_negative(self):
-        """测试：diagonal < 0（主对角线以下）"""
+        """Test: diagonal < 0 (below main diagonal)"""
         x = torch.tensor(
             [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
             device="cuda",
@@ -247,7 +247,7 @@ class TestTrilParameterPatterns:
     @pytest.mark.tril
     @pytest.mark.parametrize("diagonal", [-2, -1, 0, 1, 2])
     def test_diagonal_range(self, diagonal):
-        """测试：diagonal 参数范围"""
+        """Test: diagonal parameter range"""
         x = create_matrix((32, 32), torch.float32)
         y_gems = tril(x, diagonal=diagonal)
         y_torch = torch.tril(x, diagonal=diagonal)
@@ -255,16 +255,16 @@ class TestTrilParameterPatterns:
 
 
 # ============================================================================
-# 5. 功能完整性测试（比赛要求：所有功能分支）
+# 5. Functional completeness tests (competition requirement: all functional branches)
 # ============================================================================
 
 
 class TestTrilFunctionalCompleteness:
-    """测试功能完整性：方阵、矩形矩阵、批量处理、边界情况"""
+    """Test functional completeness: square matrices, rectangular matrices, batch processing, edge cases"""
 
     @pytest.mark.tril
     def test_square_matrix(self):
-        """测试：方阵（M = N）"""
+        """Test: square matrix (M = N)"""
         x = create_matrix((64, 64), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -273,7 +273,7 @@ class TestTrilFunctionalCompleteness:
     @pytest.mark.tril
     @pytest.mark.parametrize("shape", RECTANGULAR_SHAPES)
     def test_rectangular_matrix(self, shape):
-        """测试：矩形矩阵（M ≠ N）"""
+        """Test: rectangular matrix (M ≠ N)"""
         x = create_matrix(shape, torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -281,7 +281,7 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_tall_matrix(self):
-        """测试：高矩阵（行数 > 列数）"""
+        """Test: tall matrix (rows > columns)"""
         x = create_matrix((100, 50), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -289,7 +289,7 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_wide_matrix(self):
-        """测试：宽矩阵（行数 < 列数）"""
+        """Test: wide matrix (rows < columns)"""
         x = create_matrix((50, 100), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -297,7 +297,7 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_batch_processing_2d(self):
-        """测试：2D 批量处理 (batch, M, N)"""
+        """Test: 2D batch processing (batch, M, N)"""
         x = create_matrix((10, 32, 32), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -305,7 +305,7 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_batch_processing_3d(self):
-        """测试：3D 批量处理 (batch, channel, M, N)"""
+        """Test: 3D batch processing (batch, channel, M, N)"""
         x = create_matrix((4, 3, 16, 16), torch.float32)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -313,8 +313,8 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_consistency_with_pytorch(self):
-        """测试：与 PyTorch 实现的一致性"""
-        # 测试多次随机矩阵
+        """Test: consistency with PyTorch implementation"""
+        # Test multiple random matrices
         for _ in range(10):
             x = create_matrix((64, 64), torch.float32)
             y_gems = tril(x)
@@ -323,20 +323,20 @@ class TestTrilFunctionalCompleteness:
 
     @pytest.mark.tril
     def test_special_matrices(self):
-        """测试：特殊矩阵"""
-        # 零矩阵
+        """Test: special matrices"""
+        # Zero matrix
         x_zero = torch.zeros((10, 10), device="cuda")
         y_gems = tril(x_zero)
         y_torch = torch.tril(x_zero)
         assert_equal(y_gems, y_torch)
 
-        # 单位矩阵
+        # Identity matrix
         x_eye = torch.eye(10, device="cuda")
         y_gems = tril(x_eye)
         y_torch = torch.tril(x_eye)
         assert_equal(y_gems, y_torch)
 
-        # 全1矩阵
+        # All-ones matrix
         x_ones = torch.ones((10, 10), device="cuda")
         y_gems = tril(x_ones)
         y_torch = torch.tril(x_ones)
@@ -344,18 +344,18 @@ class TestTrilFunctionalCompleteness:
 
 
 # ============================================================================
-# 6. 综合覆盖测试（参数化组合）
+# 6. Comprehensive coverage tests (parameterized combinations)
 # ============================================================================
 
 
 class TestTrilComprehensive:
-    """综合测试：多维度组合覆盖"""
+    """Comprehensive tests: multi-dimensional combination coverage"""
 
     @pytest.mark.tril
     @pytest.mark.parametrize("shape", [(8, 8), (32, 32), (64, 64), (128, 128)])
     @pytest.mark.parametrize("diagonal", [-1, 0, 1])
     def test_shape_diagonal_combination(self, shape, diagonal):
-        """测试：形状和 diagonal 参数的组合"""
+        """Test: combination of shape and diagonal parameters"""
         x = create_matrix(shape, torch.float32)
         y_gems = tril(x, diagonal=diagonal)
         y_torch = torch.tril(x, diagonal=diagonal)
@@ -372,7 +372,7 @@ class TestTrilComprehensive:
         ],
     )
     def test_typical_use_cases(self, shape, dtype):
-        """测试：典型使用场景"""
+        """Test: typical use cases"""
         x = create_matrix(shape, dtype)
         y_gems = tril(x)
         y_torch = torch.tril(x)
@@ -382,60 +382,8 @@ class TestTrilComprehensive:
     @pytest.mark.parametrize("shape", RECTANGULAR_SHAPES)
     @pytest.mark.parametrize("diagonal", [-1, 0, 1, 2])
     def test_rectangular_with_diagonal(self, shape, diagonal):
-        """测试：矩形矩阵与 diagonal 参数组合"""
+        """Test: rectangular matrix with diagonal parameter combination"""
         x = create_matrix(shape, torch.float32)
         y_gems = tril(x, diagonal=diagonal)
         y_torch = torch.tril(x, diagonal=diagonal)
         assert_equal(y_gems, y_torch)
-
-
-# ============================================================================
-# 测试覆盖清单（用于 PR 描述）
-# ============================================================================
-
-"""
-## 测试覆盖清单
-
-### 1. 输入规模覆盖 ✓
-- [x] 极小尺寸：2×2
-- [x] 小尺寸：8×8, 16×16
-- [x] 常规尺寸：64×64, 256×256
-- [x] 大尺寸：1024×1024, 4096×4096
-
-### 2. 输入维数覆盖 ✓
-- [x] 2D 张量：方阵、矩形矩阵
-- [x] 3D 张量：(batch, M, N)
-- [x] 4D 张量：(batch, channel, M, N)
-- [x] 批量矩阵处理
-
-### 3. 数据类型覆盖 ✓
-- [x] torch.float16 (atol=1e-3)
-- [x] torch.float32 (atol=1.3e-6)
-- [x] torch.float64 (atol=1e-7)
-- [x] torch.bfloat16 (atol=0.016)
-
-### 4. 参数模式覆盖 ✓
-- [x] 默认参数：diagonal=0
-- [x] diagonal > 0：主对角线以上（1, 2）
-- [x] diagonal < 0：主对角线以下（-1, -2）
-- [x] 边界值：极端 diagonal 值
-
-### 5. 功能完整性覆盖 ✓
-- [x] 方阵处理（M = N）
-- [x] 矩形矩阵处理（M ≠ N）
-- [x] 高矩阵（行数 > 列数）
-- [x] 宽矩阵（行数 < 列数）
-- [x] 批量处理（2D, 3D, 4D）
-- [x] 特殊矩阵（零矩阵、单位矩阵、全1矩阵）
-- [x] 与 PyTorch 一致性验证
-
-### 6. 测试精度标准 ✓
-- [x] 精确匹配（tril 必须完全匹配）
-- [x] 使用 torch.equal 验证
-- [x] 所有数据类型完全一致
-
-### 7. 组合测试 ✓
-- [x] 形状 × diagonal 组合
-- [x] 形状 × 数据类型组合
-- [x] 矩形形状 × diagonal 组合
-"""
