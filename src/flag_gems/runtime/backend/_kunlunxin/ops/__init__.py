@@ -10,6 +10,7 @@ from .all import all, all_dim, all_dims
 from .amax import amax
 from .angle import angle
 from .any import any, any_dim, any_dims
+from .apply_repetition_penalties import apply_repetition_penalties
 from .arange import arange, arange_start
 from .argmax import argmax
 from .argmin import argmin
@@ -42,6 +43,7 @@ from .bitwise_or import (
     bitwise_or_tensor_,
 )
 from .bitwise_right_shift import bitwise_right_shift
+from .bmm import bmm, bmm_out
 from .cat import cat
 from .celu import celu, celu_
 from .clamp import clamp, clamp_, clamp_min, clamp_min_, clamp_tensor, clamp_tensor_
@@ -59,6 +61,7 @@ from .cumsum import cumsum, cumsum_out, normed_cumsum
 from .diag import diag
 from .diag_embed import diag_embed
 from .diagonal import diagonal_backward
+from .digamma_ import digamma_
 from .div import (
     div_mode,
     div_mode_,
@@ -140,7 +143,12 @@ from .nllloss import (
     nll_loss_forward,
 )
 from .nonzero import nonzero
-from .normal import normal_float_tensor, normal_tensor_float, normal_tensor_tensor
+from .normal import (
+    normal_,
+    normal_float_tensor,
+    normal_tensor_float,
+    normal_tensor_tensor,
+)
 from .ones import ones
 from .ones_like import ones_like
 from .pad import constant_pad_nd, pad
@@ -161,6 +169,8 @@ from .randn import randn
 from .randn_like import randn_like
 from .randperm import randperm
 from .reciprocal import reciprocal, reciprocal_
+from .reflection_pad1d import reflection_pad1d, reflection_pad1d_out
+from .reflection_pad2d import reflection_pad2d, reflection_pad2d_out
 from .relu import relu, relu_
 from .repeat import repeat
 from .repeat_interleave import (
@@ -181,8 +191,10 @@ from .sigmoid import sigmoid, sigmoid_, sigmoid_backward
 from .silu import silu, silu_, silu_backward
 from .sin import sin, sin_
 from .slice_scatter import slice_scatter
+from .soft_margin_loss import soft_margin_loss, soft_margin_loss_out
 from .softmax import softmax, softmax_backward
 from .softplus import softplus
+from .softshrink import softshrink, softshrink_out
 from .sort import sort, sort_stable
 from .sqrt import sqrt, sqrt_
 from .stack import stack
@@ -200,6 +212,7 @@ from .triu import triu
 from .uniform import uniform_
 from .unique import _unique2
 from .upsample_bicubic2d_aa import _upsample_bicubic2d_aa
+from .upsample_linear1d import upsample_linear1d
 from .upsample_nearest1d import upsample_nearest1d
 from .upsample_nearest2d import upsample_nearest2d
 from .var_mean import var_mean
@@ -213,8 +226,14 @@ from .zeros_like import zeros_like
 
 __all__ = [
     "_conv_depthwise2d",
+    "digamma_",
+    "soft_margin_loss",
+    "soft_margin_loss_out",
+    "softshrink",
+    "softshrink_out",
     "_unique2",
     "_upsample_bicubic2d_aa",
+    "apply_repetition_penalties",
     "abs",
     "abs_",
     "acos",
@@ -240,10 +259,10 @@ __all__ = [
     "arange_start",
     "argmax",
     "argmin",
-    "avg_pool2d",
-    "avg_pool2d_backward",
     "atan",
     "atan_",
+    "avg_pool2d",
+    "avg_pool2d_backward",
     "baddbmm",
     "batch_norm",
     "batch_norm_backward",
@@ -253,7 +272,6 @@ __all__ = [
     "bitwise_and_tensor",
     "bitwise_and_tensor_",
     "bitwise_left_shift",
-    "bitwise_right_shift",
     "bitwise_not",
     "bitwise_not_",
     "bitwise_or_scalar",
@@ -261,6 +279,7 @@ __all__ = [
     "bitwise_or_scalar_tensor",
     "bitwise_or_tensor",
     "bitwise_or_tensor_",
+    "bitwise_right_shift",
     "bmm",
     "bmm_out",
     "cat",
@@ -405,6 +424,7 @@ __all__ = [
     "normal_float_tensor",
     "normal_tensor_float",
     "normal_tensor_tensor",
+    "normal_",
     "normed_cumsum",
     "ones",
     "ones_like",
@@ -426,6 +446,10 @@ __all__ = [
     "randperm",
     "reciprocal",
     "reciprocal_",
+    "reflection_pad1d",
+    "reflection_pad1d_out",
+    "reflection_pad2d",
+    "reflection_pad2d_out",
     "relu",
     "relu_",
     "remainder",
@@ -437,10 +461,8 @@ __all__ = [
     "resolve_conj",
     "resolve_neg",
     "rms_norm",
-    "rms_norm_forward",
     "rms_norm_backward",
-    "sqrt",
-    "sqrt_",
+    "rms_norm_forward",
     "rsqrt",
     "rsqrt_",
     "rsub",
@@ -467,6 +489,8 @@ __all__ = [
     "softplus",
     "sort",
     "sort_stable",
+    "sqrt",
+    "sqrt_",
     "stack",
     "std",
     "sub",
@@ -493,6 +517,7 @@ __all__ = [
     "true_divide_out",
     "true_divide_",
     "uniform_",
+    "upsample_linear1d",
     "upsample_nearest1d",
     "upsample_nearest2d",
     "var_mean",
