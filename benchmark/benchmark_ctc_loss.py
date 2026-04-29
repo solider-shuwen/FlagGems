@@ -14,8 +14,8 @@ import pytest
 import torch
 
 import flag_gems
-from benchmark.attri_util import FLOAT_DTYPES
-from benchmark.performance_utils import Benchmark
+from benchmark.base import Benchmark
+from benchmark.consts import FLOAT_DTYPES
 
 # Import ctc_loss operator
 from flag_gems.ops import ctc_loss
