@@ -9,8 +9,9 @@ import pytest
 import torch
 
 import flag_gems
-from benchmark.attri_util import FLOAT_DTYPES
-from benchmark.performance_utils import Benchmark, generate_tensor_input
+from benchmark.base import Benchmark
+from benchmark.consts import FLOAT_DTYPES
+from benchmark.utils import generate_tensor_input
 
 # Import grid_sample operator
 from flag_gems.ops import grid_sample

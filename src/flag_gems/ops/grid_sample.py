@@ -16,6 +16,63 @@ from flag_gems.utils import libentry
 
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# Grid Sample Constants
+# ============================================================================
+
+# Maximum tiled voxel count for tiled kernel usage
+MAX_TILED_VOXELS = 128 * 128 * 128  # ~2M voxels
+
+# Voxel thresholds for adaptive block targeting
+# These represent approximate cube dimensions: 16³=4096, 20³=8000, 32³=32768, 50³=125000, 64³=262144
+VOXEL_THRESHOLD_SMALL = 8192  # Threshold for small outputs (16³ - 20³)
+VOXEL_THRESHOLD_MEDIUM = 32768  # Threshold for medium outputs (20³ - 32³)
+VOXEL_THRESHOLD_LARGE = 131072  # Threshold for large outputs (32³ - 50³)
+VOXEL_THRESHOLD_VERY_LARGE = 262144  # Threshold for very large outputs (50³ - 64³)
+
+# Block target configuration for different output sizes
+# Small outputs (16³ - 20³): Higher block count for better utilization
+TARGET_BLOCKS_SMALL = 512
+MIN_BLOCKS_NC_SMALL = 64
+MAX_BLOCKS_NC_SMALL = 1024
+
+# Medium outputs (20³ - 32³): Even higher block count
+TARGET_BLOCKS_MEDIUM = 768
+MIN_BLOCKS_NC_MEDIUM = 128
+MAX_BLOCKS_NC_MEDIUM = 2048
+
+# Large outputs (32³ - 50³): Maximum block targeting
+TARGET_BLOCKS_LARGE = 1024
+MIN_BLOCKS_NC_LARGE = 128
+MAX_BLOCKS_NC_LARGE = 2048
+
+# Very large outputs (50³ - 64³): Reduced block count
+TARGET_BLOCKS_VERY_LARGE = 512
+MIN_BLOCKS_NC_VERY_LARGE = 64
+MAX_BLOCKS_NC_VERY_LARGE = 1024
+
+# Extra large outputs (>= 64³): Conservative block targeting
+TARGET_BLOCKS_EXTRA_LARGE = 300
+MIN_BLOCKS_NC_EXTRA_LARGE = 50
+MAX_BLOCKS_NC_EXTRA_LARGE = 1000
+
+# Channel scaling constants
+CHANNEL_COUNT_THRESHOLD = 32  # Channel count above which to scale down block targets
+CHANNEL_SCALING_EXPONENT = 0.7  # Exponent for channel scaling factor
+MIN_TARGET_TOTAL_BLOCKS = 128  # Minimum target total blocks when scaling for channels
+MIN_BLOCKS_PER_NC = 16  # Minimum blocks per (N, C) pair when scaling for channels
+
+# Tile size constants
+MIN_TILE_SIDE = 4  # Minimum tile side length for 3D outputs
+MAX_TILE_SIDE = 64  # Maximum tile side length for 3D outputs
+LARGE_TILE_THRESHOLD = 32  # Threshold for using 32 or 64 sized tiles
+VERY_LARGE_TILE_THRESHOLD = 48  # Threshold for using 64 instead of 32
+MEDIUM_TILE_THRESHOLD = 16  # Threshold for using 16 sized tiles
+SMALL_TILE_THRESHOLD = 8  # Threshold for using 8 sized tiles
+
+# Trilinear reduction constants
+MIN_BLOCK_DIMENSION = 2  # Minimum block dimension after halving for trilinear
+
 
 def _validate_grid_sample_input(input, grid, mode, padding_mode):
     """
@@ -4786,8 +4843,6 @@ def grid_sample(
 
         # Launch kernel with appropriate grid size
         # For very large outputs (> 128x128x128), fall back to original kernels
-        MAX_TILED_VOXELS = 128 * 128 * 128  # ~2M voxels
-
         if (
             use_tiled
             and mode in ["nearest", "bilinear"]
@@ -4799,36 +4854,42 @@ def grid_sample(
 
             # More granular targeting to fix 16³ and 32³ performance
             # Key: Need MORE blocks for 16³ and 32³, not fewer
-            if output_voxels < 8192:  # 16³ - 20³
-                target_total_blocks = 512  # MORE blocks for 16³ (was 100)
-                min_blocks_per_nc = 64
-                max_blocks_per_nc = 1024
-            elif output_voxels < 32768:  # 20³ - 32³
-                target_total_blocks = 768  # MORE blocks for 20³-32³
-                min_blocks_per_nc = 128
-                max_blocks_per_nc = 2048
-            elif output_voxels < 131072:  # 32³ - 50³
-                target_total_blocks = 1024  # More blocks for medium-large
-                min_blocks_per_nc = 128
-                max_blocks_per_nc = 2048
-            elif output_voxels < 262144:  # 50³ - 64³
-                target_total_blocks = 512  # Reduced for 64³
-                min_blocks_per_nc = 64
-                max_blocks_per_nc = 1024
+            if output_voxels < VOXEL_THRESHOLD_SMALL:  # 16³ - 20³
+                target_total_blocks = TARGET_BLOCKS_SMALL
+                min_blocks_per_nc = MIN_BLOCKS_NC_SMALL
+                max_blocks_per_nc = MAX_BLOCKS_NC_SMALL
+            elif output_voxels < VOXEL_THRESHOLD_MEDIUM:  # 20³ - 32³
+                target_total_blocks = TARGET_BLOCKS_MEDIUM
+                min_blocks_per_nc = MIN_BLOCKS_NC_MEDIUM
+                max_blocks_per_nc = MAX_BLOCKS_NC_MEDIUM
+            elif output_voxels < VOXEL_THRESHOLD_LARGE:  # 32³ - 50³
+                target_total_blocks = TARGET_BLOCKS_LARGE
+                min_blocks_per_nc = MIN_BLOCKS_NC_LARGE
+                max_blocks_per_nc = MAX_BLOCKS_NC_LARGE
+            elif output_voxels < VOXEL_THRESHOLD_VERY_LARGE:  # 50³ - 64³
+                target_total_blocks = TARGET_BLOCKS_VERY_LARGE
+                min_blocks_per_nc = MIN_BLOCKS_NC_VERY_LARGE
+                max_blocks_per_nc = MAX_BLOCKS_NC_VERY_LARGE
             else:  # Large outputs (>= 64³)
-                target_total_blocks = 300  # Original for very large
-                min_blocks_per_nc = 50
-                max_blocks_per_nc = 1000
+                target_total_blocks = TARGET_BLOCKS_EXTRA_LARGE
+                min_blocks_per_nc = MIN_BLOCKS_NC_EXTRA_LARGE
+                max_blocks_per_nc = MAX_BLOCKS_NC_EXTRA_LARGE
 
             # Channel-aware tiling: reduce targets for high channel counts to avoid too many blocks
             # When C is large, we create too many blocks with the current formula
             # Solution: Reduce target_total_blocks proportionally
-            if C > 32:
-                # Scale down targets more aggressively to avoid excessive blocks when C > 32
+            if C > CHANNEL_COUNT_THRESHOLD:
+                # Scale down targets more aggressively to avoid excessive blocks when C > threshold
                 # Use sqrt scaling for better balance
-                channel_scale = (32.0 / C) ** 0.7  # More aggressive scaling
-                target_total_blocks = max(128, int(target_total_blocks * channel_scale))
-                min_blocks_per_nc = max(16, int(min_blocks_per_nc * channel_scale))
+                channel_scale = (
+                    CHANNEL_COUNT_THRESHOLD / C
+                ) ** CHANNEL_SCALING_EXPONENT
+                target_total_blocks = max(
+                    MIN_TARGET_TOTAL_BLOCKS, int(target_total_blocks * channel_scale)
+                )
+                min_blocks_per_nc = max(
+                    MIN_BLOCKS_PER_NC, int(min_blocks_per_nc * channel_scale)
+                )
                 # Keep max_blocks_per_nc unchanged to prevent excessive blocks
 
             # Target blocks per (N, C) pair
@@ -4842,25 +4903,32 @@ def grid_sample(
             total_voxels = D_out * H_out * W_out
             target_tile_voxels = total_voxels // target_blocks_per_nc
             target_tile_side = int(
-                max(4, min(64, int(target_tile_voxels ** (1.0 / 3.0))))
-            )  # Reverted to min=4
+                max(
+                    MIN_TILE_SIDE,
+                    min(MAX_TILE_SIDE, int(target_tile_voxels ** (1.0 / 3.0))),
+                )
+            )
 
             # Snap to power-of-2 for better alignment
             # Minimum tile size is 4x4x4 for small outputs, 8x8x8 for large
-            if target_tile_side >= 32:
-                block_d = block_h = block_w = 32 if target_tile_side < 48 else 64
-            elif target_tile_side >= 16:
-                block_d = block_h = block_w = 16
-            elif target_tile_side >= 8:
-                block_d = block_h = block_w = 8
+            if target_tile_side >= LARGE_TILE_THRESHOLD:
+                block_d = block_h = block_w = (
+                    LARGE_TILE_THRESHOLD
+                    if target_tile_side < VERY_LARGE_TILE_THRESHOLD
+                    else MAX_TILE_SIDE
+                )
+            elif target_tile_side >= MEDIUM_TILE_THRESHOLD:
+                block_d = block_h = block_w = MEDIUM_TILE_THRESHOLD
+            elif target_tile_side >= SMALL_TILE_THRESHOLD:
+                block_d = block_h = block_w = SMALL_TILE_THRESHOLD
             else:
-                block_d = block_h = block_w = 4  # Reverted from 8
+                block_d = block_h = block_w = MIN_TILE_SIDE
 
             # For trilinear, use smaller tiles due to higher memory footprint (8x loads)
             if mode == "bilinear":  # actually trilinear in 5D
-                block_d = max(2, block_d // 2)  # Reverted from max(4, ...)
-                block_h = max(2, block_h // 2)  # Reverted from max(4, ...)
-                block_w = max(2, block_w // 2)  # Reverted from max(4, ...)
+                block_d = max(MIN_BLOCK_DIMENSION, block_d // 2)
+                block_h = max(MIN_BLOCK_DIMENSION, block_h // 2)
+                block_w = max(MIN_BLOCK_DIMENSION, block_w // 2)
 
             # Calculate actual grid size
             num_d_blocks = (D_out + block_d - 1) // block_d
