@@ -21,8 +21,8 @@ import torch
 import torch.nn.functional as F
 
 import flag_gems
-from benchmark.attri_util import FLOAT_DTYPES
-from benchmark.performance_utils import Benchmark
+from benchmark.base import Benchmark
+from benchmark.consts import FLOAT_DTYPES
 
 # Import the operator
 from flag_gems.fused import chunk_gated_delta_rule
